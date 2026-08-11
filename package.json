@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "test": "node --test",
+    "test:baseline": "node --test test/baseline/*.test.js",
     "generate-secret": "node generate-secret.js"
   },
   "dependencies": {
