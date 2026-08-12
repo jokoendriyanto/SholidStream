@@ -10,7 +10,7 @@ on:
       - main
 
 jobs:
-  baseline-tests:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -27,5 +27,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run baseline tests
-        run: npm run test:baseline
+      - name: Run all tests
+        run: npm test
