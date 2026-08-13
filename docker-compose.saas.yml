@@ -15,7 +15,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -35,6 +35,25 @@ services:
       - "9001:9001"
     volumes:
       - sholidstream_minio:/data
+
+  stream-worker:
+    build: .
+    command: ["npm", "run", "worker:start"]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://sholidstream:sholidstream@postgres:5432/sholidstream
+      DATABASE_SSL: "false"
+      REDIS_URL: redis://redis:6379
+      STREAM_WORKER_CONCURRENCY: "2"
+      STREAM_WORKER_HEARTBEAT_MS: "15000"
+      STREAM_WORKER_LEASE_MS: "45000"
+      FFMPEG_PATH: /usr/bin/ffmpeg
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   sholidstream_postgres:

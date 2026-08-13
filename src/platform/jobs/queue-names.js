@@ -4,6 +4,7 @@ const QUEUE_NAMES = Object.freeze({
   STREAM_START: 'stream.start',
   STREAM_STOP: 'stream.stop',
   STREAM_RECOVER: 'stream.recover',
+  STREAM_WORKER_COMMAND: 'stream.worker.command',
   SCHEDULE_EXECUTE: 'schedule.execute',
   MEDIA_PROBE: 'media.probe',
   MEDIA_PROCESS: 'media.process',

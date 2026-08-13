@@ -6,9 +6,11 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+    "worker:start": "node worker.js",
     "test": "node --test",
     "test:baseline": "node --test test/baseline/*.test.js",
     "test:platform": "node --test test/platform/*.test.js",
+    "test:worker": "node --test test/worker/*.test.js",
     "db:migrate": "node scripts/migrate-postgres.js",
     "generate-secret": "node generate-secret.js"
   },
