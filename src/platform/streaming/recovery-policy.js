@@ -1,0 +1,5 @@
+'use strict';
+const DEFAULT_BUDGETS=Object.freeze({WORKER:3,NETWORK:4,DESTINATION:2,AUTH:1,FFMPEG:2,STORAGE:2,RESOURCE_EXHAUSTION:2,UNKNOWN:1});
+function classifyFailure(code=''){const value=String(code).toUpperCase();if(value.includes('HEARTBEAT')||value.includes('WORKER')||value.includes('LEASE'))return'WORKER';if(value.includes('NETWORK')||value.includes('TIMEOUT'))return'NETWORK';if(value.includes('AUTH')||value.includes('TOKEN'))return'AUTH';if(value.includes('RTMP')||value.includes('DESTINATION'))return'DESTINATION';if(value.includes('FFMPEG')||value.includes('PROCESS'))return'FFMPEG';if(value.includes('STORAGE')||value.includes('MEDIA'))return'STORAGE';if(value.includes('CAPACITY')||value.includes('RESOURCE'))return'RESOURCE_EXHAUSTION';return'UNKNOWN';}
+class RecoveryPolicy{constructor({budgets=DEFAULT_BUDGETS}={}){this.budgets={...budgets};}decision({failureCode,attempts}){const failureClass=classifyFailure(failureCode);const budget=this.budgets[failureClass]??0;return{failureClass,budget,retry:attempts<budget,attempt:attempts+1};}}
+module.exports={RecoveryPolicy,classifyFailure,DEFAULT_BUDGETS};
