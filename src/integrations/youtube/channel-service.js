@@ -1,0 +1,3 @@
+'use strict';
+class YoutubeChannelService{constructor({clientFactory,quotaRepository,quotaCosts,dailyQuotaLimit}={}){Object.assign(this,{clientFactory,quotaRepository,quotaCosts,dailyQuotaLimit});}async getOwnChannel({workspaceId,connectionId,correlationId=null}){const units=this.quotaCosts['channels.list'];await this.quotaRepository.consume({workspaceId,connectionId,operation:'channels.list',units,correlationId,dailyLimit:this.dailyQuotaLimit});const {youtube}=await this.clientFactory.forConnection(workspaceId,connectionId);const response=await youtube.channels.list({part:'id,snippet,statistics,contentDetails',mine:true});return response.data.items?.[0]||null;}}
+module.exports={YoutubeChannelService};
