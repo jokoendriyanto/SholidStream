@@ -10,51 +10,41 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    volumes:
-      - sholidstream_postgres:/var/lib/postgresql/data
-
+    volumes: [sholidstream_postgres:/var/lib/postgresql/data]
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    command: ["redis-server","--appendonly","yes","--maxmemory-policy","noeviction"]
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD","redis-cli","ping"]
       interval: 5s
       timeout: 3s
       retries: 10
-    volumes:
-      - sholidstream_redis:/data
-
+    volumes: [sholidstream_redis:/data]
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - sholidstream_minio:/data
-
+    ports: ["9000:9000","9001:9001"]
+    volumes: [sholidstream_minio:/data]
+  control-plane:
+    build: .
+    command: ["npm","run","control:start"]
+    restart: unless-stopped
+    env_file: [.env]
+    ports: ["7580:7580"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
   stream-worker:
     build: .
-    command: ["npm", "run", "worker:start"]
+    command: ["npm","run","worker:start"]
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://sholidstream:sholidstream@postgres:5432/sholidstream
-      DATABASE_SSL: "false"
-      REDIS_URL: redis://redis:6379
-      STREAM_WORKER_CONCURRENCY: "2"
-      STREAM_WORKER_HEARTBEAT_MS: "15000"
-      STREAM_WORKER_LEASE_MS: "45000"
-      FFMPEG_PATH: /usr/bin/ffmpeg
+    env_file: [.env]
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
 volumes:
   sholidstream_postgres:
   sholidstream_redis:

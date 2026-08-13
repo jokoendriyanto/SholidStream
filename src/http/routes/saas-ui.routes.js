@@ -1,0 +1,1 @@
+'use strict'; const express=require('express'); function createSaasUiRouter(){const router=express.Router();router.get('/saas',(req,res)=>res.render('saas/dashboard'));return router;} module.exports={createSaasUiRouter};
