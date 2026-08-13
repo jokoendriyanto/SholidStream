@@ -52,6 +52,17 @@ class StreamSessionRuntime {
     return updated;
   }
 
+  async settleStopped(session, eventType, metadata = {}) {
+    try {
+      return await this.transition(session, STREAM_STATE.STOPPED, eventType, metadata);
+    } catch (error) {
+      if (!error || error.code !== 'STREAM_SESSION_CONFLICT') throw error;
+      const latest = await this.sessionRepository.findById(session.workspace_id, session.id);
+      if (latest && TERMINAL_STATES.has(latest.state)) return latest;
+      throw error;
+    }
+  }
+
   assertGeneration(session, command) {
     if (session.generation !== command.generation) {
       const error = new Error('Worker command generation is stale');
@@ -215,7 +226,7 @@ class StreamSessionRuntime {
     await this.processSupervisor.stop(current.id);
     const refreshed = await this.sessionRepository.findById(current.workspace_id, current.id);
     if (refreshed && refreshed.state === STREAM_STATE.STOPPING) {
-      current = await this.transition(refreshed, STREAM_STATE.STOPPED, 'WORKER_STOPPED', { reason, workerIdentity: this.workerIdentity });
+      current = await this.settleStopped(refreshed, 'WORKER_STOPPED', { reason, workerIdentity: this.workerIdentity });
     } else if (refreshed) {
       current = refreshed;
     }
@@ -231,7 +242,7 @@ class StreamSessionRuntime {
     if (!session || TERMINAL_STATES.has(session.state)) return;
     if (session.state === STREAM_STATE.STOPPING || result.stopping) {
       if (session.state === STREAM_STATE.STOPPING) {
-        await this.transition(session, STREAM_STATE.STOPPED, 'WORKER_PROCESS_STOPPED', { code: result.code, signal: result.signal });
+        await this.settleStopped(session, 'WORKER_PROCESS_STOPPED', { code: result.code, signal: result.signal });
       }
       return;
     }
