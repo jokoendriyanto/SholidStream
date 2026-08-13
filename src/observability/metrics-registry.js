@@ -1,0 +1,3 @@
+'use strict';
+class MetricsRegistry{constructor(){this.values=new Map();}inc(name,labels={},amount=1){const key=this.key(name,labels);const current=this.values.get(key)||{name,labels,value:0};current.value+=amount;this.values.set(key,current);}gauge(name,labels={},value=0){this.values.set(this.key(name,labels),{name,labels,value:Number(value)});}key(name,labels){return`${name}|${Object.entries(labels).sort().map(([k,v])=>`${k}=${v}`).join(',')}`;}render(){return Array.from(this.values.values()).map(m=>`${m.name}${Object.keys(m.labels).length?`{${Object.entries(m.labels).map(([k,v])=>`${k}="${String(v).replace(/"/g,'')}"`).join(',')}}`:''} ${m.value}`).join('\n')+'\n';}}
+module.exports={MetricsRegistry};

@@ -4,6 +4,7 @@ const { Queue } = require('bullmq');
 const { loadPlatformEnv } = require('../../config/env');
 const { createRedisClient } = require('../../infrastructure/redis/client');
 const { QUEUE_NAMES } = require('./queue-names');
+const { isWorkerQueueName } = require('../streaming/worker-routing');
 
 class QueueRegistry {
   constructor({ connection, prefix = 'sholidstream', QueueClass = Queue } = {}) {
@@ -15,7 +16,7 @@ class QueueRegistry {
   }
 
   get(name) {
-    if (!Object.values(QUEUE_NAMES).includes(name)) throw new TypeError(`Unknown queue: ${name}`);
+    if (!Object.values(QUEUE_NAMES).includes(name) && !isWorkerQueueName(name)) throw new TypeError(`Unknown queue: ${name}`);
     if (!this.queues.has(name)) {
       this.queues.set(name, new this.QueueClass(name, {
         connection: this.connection,
