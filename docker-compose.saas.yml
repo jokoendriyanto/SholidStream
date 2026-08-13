@@ -1,33 +1,26 @@
 services:
   postgres:
     image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: sholidstream
-      POSTGRES_USER: sholidstream
-      POSTGRES_PASSWORD: sholidstream
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sholidstream -d sholidstream"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    environment: {POSTGRES_DB: sholidstream, POSTGRES_USER: sholidstream, POSTGRES_PASSWORD: sholidstream}
+    healthcheck: {test: ["CMD-SHELL","pg_isready -U sholidstream -d sholidstream"], interval: 5s, timeout: 5s, retries: 10}
     volumes: [sholidstream_postgres:/var/lib/postgresql/data]
   redis:
     image: redis:7-alpine
     command: ["redis-server","--appendonly","yes","--maxmemory-policy","noeviction"]
-    healthcheck:
-      test: ["CMD","redis-cli","ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+    healthcheck: {test: ["CMD","redis-cli","ping"], interval: 5s, timeout: 3s, retries: 10}
     volumes: [sholidstream_redis:/data]
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
+    environment: {MINIO_ROOT_USER: minio, MINIO_ROOT_PASSWORD: minio123}
     ports: ["9000:9000","9001:9001"]
     volumes: [sholidstream_minio:/data]
+  migrate:
+    build: .
+    command: ["npm","run","db:migrate"]
+    env_file: [.env]
+    depends_on:
+      postgres: {condition: service_healthy}
   control-plane:
     build: .
     command: ["npm","run","control:start"]
@@ -35,7 +28,7 @@ services:
     env_file: [.env]
     ports: ["7580:7580"]
     depends_on:
-      postgres: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
   stream-worker:
     build: .
@@ -43,9 +36,6 @@ services:
     restart: unless-stopped
     env_file: [.env]
     depends_on:
-      postgres: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
-volumes:
-  sholidstream_postgres:
-  sholidstream_redis:
-  sholidstream_minio:
+volumes: {sholidstream_postgres: {}, sholidstream_redis: {}, sholidstream_minio: {}}

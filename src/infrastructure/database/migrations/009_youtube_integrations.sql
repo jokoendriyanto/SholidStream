@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS integration_connections (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS integration_connections_provider_account_unique ON integration_connections(workspace_id,provider,external_account_id) WHERE external_account_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS integration_connections_workspace_idx ON integration_connections(workspace_id,provider,status);
-
 CREATE TABLE IF NOT EXISTS youtube_live_resources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -30,7 +30,13 @@ CREATE TABLE IF NOT EXISTS youtube_live_resources (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(workspace_id,broadcast_id)
 );
-
+CREATE TABLE IF NOT EXISTS youtube_quota_daily_totals (
+  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  quota_day DATE NOT NULL,
+  used_units INTEGER NOT NULL DEFAULT 0 CHECK(used_units >= 0),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY(workspace_id,quota_day)
+);
 CREATE TABLE IF NOT EXISTS youtube_quota_usage (
   id BIGSERIAL PRIMARY KEY,
   workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
