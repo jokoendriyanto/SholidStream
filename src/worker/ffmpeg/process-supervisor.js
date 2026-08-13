@@ -94,10 +94,11 @@ class FfmpegProcessSupervisor {
 
     await new Promise((resolve) => {
       let finished = false;
+      let forceTimer = null;
       const done = () => {
         if (finished) return;
         finished = true;
-        clearTimeout(forceTimer);
+        if (forceTimer) clearTimeout(forceTimer);
         resolve();
       };
 
@@ -109,7 +110,7 @@ class FfmpegProcessSupervisor {
         return;
       }
 
-      const forceTimer = setTimeout(() => {
+      forceTimer = setTimeout(() => {
         if (entry.child.exitCode === null) {
           try { entry.child.kill('SIGKILL'); } catch (_) {}
         }
